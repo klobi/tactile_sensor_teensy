@@ -1,6 +1,7 @@
 #include "WProgram.h"
 
 #define HWSERIAL Serial1
+#define printf HWSERIAL.printf
 
 void setup()
 {

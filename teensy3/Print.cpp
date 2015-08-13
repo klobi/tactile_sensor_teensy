@@ -84,19 +84,44 @@ int _write(int file, char *ptr, int len)
 }
 }
 
-int Print::printf(const char *format, ...)
-{
-	va_list ap;
+#include <stdarg.h>
+#define PRINTF_BUF 80 // define the tmp buffer size (change if desired)
+   int Print::printf(const char *format, ...)
+   {
+   char buf[PRINTF_BUF];
+   va_list ap;
 	va_start(ap, format);
-	return vdprintf((int)this, format, ap);
-}
-
-int Print::printf(const __FlashStringHelper *format, ...)
-{
-	va_list ap;
+	vsnprintf(buf, sizeof(buf), format, ap);
+	for(char *p = &buf[0]; *p; p++) // emulate cooked mode for newlines
+	{
+		if(*p == '\n')
+			write('\r');
+		write(*p);
+	}
+	va_end(ap);
+	return 0;
+   }
+#ifdef F // check to see if F() macro is available
+   int Print::printf(const __FlashStringHelper *format, ...)
+   {
+   char buf[PRINTF_BUF];
+   va_list ap;
 	va_start(ap, format);
-	return vdprintf((int)this, (const char *)format, ap);
-}
+#ifdef __AVR__
+	vsnprintf_P(buf, sizeof(buf), (const char *)format, ap); // progmem for AVR
+#else
+	vsnprintf(buf, sizeof(buf), (const char *)format, ap); // for the rest of the world
+#endif
+	for(char *p = &buf[0]; *p; p++) // emulate cooked mode for newlines
+	{
+		if(*p == '\n')
+			write('\r');
+		write(*p);
+	}
+	va_end(ap);
+	return 0;
+   }
+#endif
 
 #ifdef __MKL26Z64__
 
