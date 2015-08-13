@@ -1,4 +1,5 @@
 #include "WProgram.h"
+#include <spi4teensy3.h>
 
 #define HWSERIAL Serial1
 #define printf HWSERIAL.printf
