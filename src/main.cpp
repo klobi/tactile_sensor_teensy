@@ -1,28 +1,21 @@
 #include "WProgram.h"
 
-extern "C" int main(void)
+#define HWSERIAL Serial1
+
+void setup()
 {
-#ifdef USING_MAKEFILE
-
-	// To use Teensy 3.0 without Arduino, simply put your code here.
-	// For example:
-
-	pinMode(13, OUTPUT);
-	while (1) {
-		digitalWriteFast(13, HIGH);
-		delay(500);
-		digitalWriteFast(13, LOW);
-		delay(500);
-	}
-
-
-#else
-	// Arduino's main() function just calls setup() and loop()....
-	setup();
-	while (1) {
-		loop();
-		yield();
-	}
-#endif
+        HWSERIAL.begin(115200);
 }
 
+int main(void)
+{
+        int incomingByte;
+	setup();
+	while(true)
+	{
+		if (HWSERIAL.available() > 0) {
+			incomingByte = HWSERIAL.read();
+	                printf("UART received: %i\n", incomingByte);
+		}
+	}
+}
