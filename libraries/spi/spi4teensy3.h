@@ -28,18 +28,19 @@
 #define SPI4TEENSY3_MODE_3 1, 1
 #define MODE_TO_SPI4TEENSY3_MODE(x) (x & 1), (x&2)
 
-namespace spi4teensy3 {
-        void init();
-        void init(uint8_t speed);
-        void init(uint8_t cpol, uint8_t cpha);
-        void init(uint8_t speed, uint8_t cpol, uint8_t cpha);
-        void send(uint8_t b);
-        void send(void *bufr, size_t n);
-        uint8_t receive();
-        void receive(void *bufr, size_t n);
+
+        void spi4teensy3_init();
+        void spi4teensy3_init_speed(uint8_t speed);
+        void spi4teensy3_init_c(uint8_t cpol, uint8_t cpha);
+        void spi4teensy3_init_all(uint8_t speed, uint8_t cpol, uint8_t cpha);
+        uint8_t spi4teensy3_send(uint8_t b);
+        uint16_t spi4teensy3_send_word(uint16_t word);
+        void spi4teensy3_send_buf(void *bufr, size_t n);
+        uint8_t spi4teensy3_receive();
+        void spi4teensy3_receive_buf(void *bufr, size_t n);
 
         //void updatectars();
-};
+
 #endif /* __MK20DX128__ || __MK20DX256__ */
 #endif	/* SPI4TEENSY3_H */
 

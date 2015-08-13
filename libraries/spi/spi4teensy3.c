@@ -85,11 +85,11 @@
  *
  * </PRE>
  */
-namespace spi4teensy3 {
+
         uint32_t ctar0;
         uint32_t ctar1;
 
-        void updatectars() {
+        void spi4teensy3_updatectars() {
                 // This function is only used internally.
                 uint32_t mcr = SPI0_MCR;
                 if(mcr & SPI_MCR_MDIS) {
@@ -106,7 +106,7 @@ namespace spi4teensy3 {
         /**
          * Generic initialization. Maximum speed, cpol and cpha 0.
          */
-        void init() {
+        void spi4teensy3_init() {
                 SIM_SCGC6 |= SIM_SCGC6_SPI0;
                 CORE_PIN11_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);
                 CORE_PIN12_CONFIG = PORT_PCR_MUX(2);
@@ -119,7 +119,7 @@ namespace spi4teensy3 {
                 ctar1 |= SPI_CTAR_FMSZ(15);
                 SPI0_MCR = SPI_MCR_MSTR | SPI_MCR_PCSIS(0x1F);
                 SPI0_MCR |= SPI_MCR_CLR_RXF | SPI_MCR_CLR_TXF;
-                updatectars();
+                spi4teensy3_updatectars();
         }
 
         /**
@@ -127,11 +127,11 @@ namespace spi4teensy3 {
          * @param cpol SPI Polarity
          * @param cpha SPI Phase
          */
-        void init(uint8_t cpol, uint8_t cpha) {
-                init();
+        void spi4teensy3_init_c(uint8_t cpol, uint8_t cpha) {
+                spi4teensy3_init();
                 ctar0 |= (cpol == 0 ? 0 : SPI_CTAR_CPOL) | (cpha == 0 ? 0 : SPI_CTAR_CPHA);
                 ctar1 |= (cpol == 0 ? 0 : SPI_CTAR_CPOL) | (cpha == 0 ? 0 : SPI_CTAR_CPHA);
-                updatectars();
+                spi4teensy3_updatectars();
         }
 
         /**
@@ -139,8 +139,8 @@ namespace spi4teensy3 {
          *
          * @param SPI speed [0-7]
          */
-        void init(uint8_t speed) {
-                init();
+        void spi4teensy3_init_speed(uint8_t speed) {
+                spi4teensy3_init();
                 // Default 1/2 speed
                 uint32_t ctar = SPI_CTAR_DBR;
                 switch(speed) {
@@ -169,6 +169,7 @@ namespace spi4teensy3 {
 
                         case 7: //1/128
                                 ctar = SPI_CTAR_PBR(1) | SPI_CTAR_BR(6);
+                                break;
                                 // fall thru
                         default:
                                 // default 1/2 speed, this is the maximum.
@@ -176,7 +177,7 @@ namespace spi4teensy3 {
                 }
                 ctar0 = ctar | SPI_CTAR_FMSZ(7);
                 ctar1 = ctar | SPI_CTAR_FMSZ(15);
-                updatectars();
+                spi4teensy3_updatectars();
         }
 
         /**
@@ -186,11 +187,11 @@ namespace spi4teensy3 {
          * @param cpol SPI Polarity
          * @param cpha SPI Phase
          */
-        void init(uint8_t speed, uint8_t cpol, uint8_t cpha) {
-                init(speed);
+        void spi4teensy3_init_all(uint8_t speed, uint8_t cpol, uint8_t cpha) {
+                spi4teensy3_init_speed(speed);
                 ctar0 |= (cpol == 0 ? 0 : SPI_CTAR_CPOL) | (cpha == 0 ? 0 : SPI_CTAR_CPHA);
                 ctar1 |= (cpol == 0 ? 0 : SPI_CTAR_CPOL) | (cpha == 0 ? 0 : SPI_CTAR_CPHA);
-                updatectars();
+                spi4teensy3_updatectars();
         }
 
         /**
@@ -198,30 +199,44 @@ namespace spi4teensy3 {
          *
          * @param b byte to send over SPI
          */
-        void send(uint8_t b) {
+        uint8_t spi4teensy3_send(uint8_t b) {
+                uint8_t byte_tmp;
                 // clear any data in RX/TX FIFOs, and be certain we are in master mode.
                 SPI0_MCR = SPI_MCR_MSTR | SPI_MCR_CLR_RXF | SPI_MCR_CLR_TXF | SPI_MCR_PCSIS(0x1F);
                 SPI0_SR = SPI_SR_TCF;
                 SPI0_PUSHR = SPI_PUSHR_CONT | b;
+                printf("MCR 0x%02x\n", b);
                 while(!(SPI0_SR & SPI_SR_TCF));
-                // While technically needed, we reset anyway.
-                // Not reading SPI saves a few clock cycles over many transfers.
-                //SPI0_POPR;
+                byte_tmp = SPI0_POPR;
+                return byte_tmp;
+        }
+
+        uint16_t spi4teensy3_send_word(uint16_t word){
+            uint16_t word_tmp;
+
+            // clear any data in RX/TX FIFOs, and be certain we are in master mode.
+            SPI0_MCR = SPI_MCR_MSTR | SPI_MCR_CLR_RXF | SPI_MCR_CLR_TXF | SPI_MCR_PCSIS(0x1F);
+            SPI0_SR = SPI_SR_TCF;
+            SPI0_PUSHR = SPI_PUSHR_CONT | word;
+            printf("MCR 0x%04x\n", word);
+            while(!(SPI0_SR & SPI_SR_TCF));
+            word_tmp = SPI0_POPR;
+            return word_tmp;
         }
 
         /**
          * Send an array of bytes.
          *
-         * @param bufr array of bytes to send
-         * @param n number of bytes to send
+         * @param bufr array of bytes to spi4teensy3_send
+         * @param n number of bytes to spi4teensy3_send
          */
-        void send(void *bufr, size_t n) {
+        void spi4teensy3_send_buf(void *bufr, size_t n) {
                 int i;
                 int nf;
                 uint8_t *buf = (uint8_t *)bufr;
 
                 if(n & 1) {
-                        send(*buf++);
+                        spi4teensy3_send(*buf++);
                         n--;
                 }
                 // clear any data in RX/TX FIFOs, and be certain we are in master mode.
@@ -254,7 +269,7 @@ namespace spi4teensy3 {
         /**
          * @return byte from SPI
          */
-        uint8_t receive() {
+        uint8_t spi4teensy3_receive() {
                 // clear any data in RX/TX FIFOs, and be certain we are in master mode.
                 SPI0_MCR = SPI_MCR_MSTR | SPI_MCR_CLR_RXF | SPI_MCR_CLR_TXF | SPI_MCR_PCSIS(0x1F);
                 SPI0_SR = SPI_SR_TCF;
@@ -269,12 +284,12 @@ namespace spi4teensy3 {
          * @param bufr array that stores bytes from SPI.
          * @param n number of bytes to receive.
          */
-        void receive(void *bufr, size_t n) {
+        void spi4teensy3_receive_buf(void *bufr, size_t n) {
                 int i;
                 uint8_t *buf = (uint8_t *)bufr;
 
                 if(n & 1) {
-                        *buf++ = receive();
+                        *buf++ = spi4teensy3_receive();
                         n--;
                 }
 
@@ -303,5 +318,4 @@ namespace spi4teensy3 {
                 }
 
         }
-}
 #endif
