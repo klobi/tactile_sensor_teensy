@@ -18,7 +18,8 @@
 int spi_init_master(uint8_t speed, uint8_t cpol, uint8_t cpha)
 {
 	#ifdef __MK20DX256__
-	spi4teensy3_init_all(speed, cpol, cpha);
+	//spi4teensy3_init_all(speed, cpol, cpha);
+	spi4t3_init_master();
 	#endif
 	return 0;
 }
@@ -54,9 +55,10 @@ uint8_t spi_read_byte(uint8_t byte)
 
 uint16_t spi_read_word(uint16_t word)
 {
-	uint8_t w = 0;
+	volatile uint16_t w = 0;
 	#ifdef __MK20DX256__
-	w = spi4teensy3_send_word(word);
+	//w = spi4teensy3_send_word(word);
+	spi4t3_txrx16(&word, &w, 1, 0, 10);
 	#endif
 	#ifdef DEBUG
 	printf("Word:\n\tsend: 0x%04x\n\tReceive: 0x%04x\n", word, w);

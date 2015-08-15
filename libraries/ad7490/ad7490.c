@@ -25,11 +25,9 @@ int ad7490_read(ad7490* device, unsigned char channel,  ad7490_value* value)
 
 	/* Data from wrong channel */
 	spi_transaction(device->chip_select, (void*)&control, 1);
-
 	control = 0x0350;
 	control |= channel << 10;
 	spi_transaction(device->chip_select, (void*)&control, 1);
-
 	/* Get the raw data */
 	raw_value = control;
 	/* Four first bits in raw data are the address number */
@@ -63,7 +61,10 @@ int ad7490_init(ad7490* device)
 	ad7490_value ad7490_temp;
 
 	spi_transaction(device->chip_select, (void*)&dummy, 1);
+	delayMicroseconds(200);
+	dummy = 0xFFFF;
 	spi_transaction(device->chip_select, (void*)&dummy, 1);
+	delayMicroseconds(200);
 
 	for(i=0; i<16; i++)
 	{

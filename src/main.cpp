@@ -59,7 +59,7 @@ int main(void)
 	setup();
 
 	printf("Hello and Welcome!\n");
-	spi_init_master(3, 0, 0);
+	spi_init_master(3, 1, 0);
 
 
 
@@ -72,7 +72,6 @@ int main(void)
 		{
 			printf("AD7490 Fail\n");
 		}
-
 
 		//spi_read_all((void*)&devices, values);
 

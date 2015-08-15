@@ -85,6 +85,172 @@
  *
  * </PRE>
  */
+		uint32_t ctar=0;
+
+        void spi4t3_init_master(void) {
+        		SIM_SCGC6 |= SIM_SCGC6_SPI0;
+                spi4t3_setMCR(MASTER);
+                spi4t3_setCTAR(0,16,SPI_MODE2, MSB_FIRST,SPI_CLOCK_DIV8);
+                spi4t3_enablePins(SCK, MOSI, MISO, CS4, CS4_ActiveLOW);
+        }
+
+        void spi4t3_enablePins(uint8_t sck, uint8_t mosi, uint8_t miso, uint8_t cs, int activeState)
+        {
+                if (sck == 0x0D){
+                        CORE_PIN13_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);}    //Set Pin13 Output & SCK
+                if (sck == 0x0E){
+                        CORE_PIN13_CONFIG = PORT_PCR_MUX(1);
+                        CORE_PIN14_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);}    //Set Pin14 Output & SCK
+                if (mosi == 0x0B){
+                        CORE_PIN11_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);}    //Set Pin11 Output & MOSI
+                if (mosi ==  0x07){
+                        CORE_PIN7_CONFIG  = PORT_PCR_DSE | PORT_PCR_MUX(2);}    //Set Pin7  Output & MOSI
+                if (miso == 0x0C){
+                        CORE_PIN12_CONFIG = PORT_PCR_MUX(2);}                                   //Set Pin12 Input & MISO
+                if (miso ==  0x08){
+                        CORE_PIN8_CONFIG  = PORT_PCR_MUX(2);}                                   //Set Pin8  Input & MISO
+                spi4t3_enableCS(cs, activeState);
+        }
+
+        void spi4t3_enableCS(uint8_t cs, int activeState){
+                if (cs   == 0x01){
+                        CORE_PIN10_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin10 Output & CS0
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS0_ActiveLOW);}}
+                if (cs   ==  0x02){
+                        CORE_PIN9_CONFIG  = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin9  Output & CS1
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS1_ActiveLOW);}}
+                if (cs   == 0x04){
+                        CORE_PIN20_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin20 Output & CS2
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS2_ActiveLOW);}}
+                if (cs   == 0x08){
+                        CORE_PIN21_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin21 Output & CS3
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS3_ActiveLOW);}}
+                if (cs   == 0x10){
+                        CORE_PIN15_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin15 Output & CS4
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS4_ActiveLOW);}}
+                if (cs   ==  0x81){
+                        CORE_PIN2_CONFIG  = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin2  Output & (alt) CS0
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS0_ActiveLOW);}}
+                if (cs   ==  0x82){
+                        CORE_PIN6_CONFIG  = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin6  Output & (alt) CS1
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS1_ActiveLOW);}}
+                if (cs   == 0x84){
+                        CORE_PIN23_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin23 Output & (alt) CS2
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS2_ActiveLOW);}}
+                if (cs   == 0x88){
+                        CORE_PIN22_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);             //Set Pin22 Output & (alt) CS3
+                        if (activeState == 1){
+                                spi4t3_setCS_ActiveLOW(CS3_ActiveLOW);}}
+        }
+
+        void spi4t3_setCS_ActiveLOW(uint32_t pin){
+                spi4t3_stop();
+                SPI0_MCR |= (pin);
+                spi4t3_start();
+        }
+
+        void spi4t3_stop()
+        {
+                SPI0_MCR |= SPI_MCR_HALT | SPI_MCR_MDIS;
+        }
+
+        void spi4t3_start()
+        {
+                SPI0_MCR &= ~SPI_MCR_HALT & ~SPI_MCR_MDIS;
+        }
+
+        void spi4t3_setMCR(int mode)
+        {
+        	spi4t3_stop();
+			if (mode==1){
+				SPI0_MCR = SPI_MCR_MSTR;}
+			else{
+				SPI0_MCR=0x00000000;}
+			spi4t3_start();
+        }
+
+        void spi4t3_setCTAR(int CTARn, uint8_t size, uint8_t dataMode, uint8_t bo, uint8_t cdiv)
+        {
+                if (CTARn==0){
+                        SPI0_CTAR0=0;}
+                if(CTARn == 1){
+                        SPI0_CTAR1=0;}
+                spi4t3_setFrameSize(CTARn, (size - 1));
+                spi4t3_setMode(CTARn, dataMode);
+                spi4t3_setBitOrder(CTARn, bo);
+                spi4t3_setClockDivider(CTARn, cdiv);
+        }
+
+        void spi4t3_setFrameSize(uint8_t CTARn, uint8_t size)
+        {
+                spi4t3_stop();
+                if (CTARn==0){
+                        SPI0_CTAR0 |= SPI_CTAR_FMSZ(size);}
+                if (CTARn==1){
+                        SPI0_CTAR1 |= SPI_CTAR_FMSZ(size);}
+                if (CTARn==2){
+                        SPI0_CTAR0_SLAVE |= SPI_CTAR_FMSZ(size);}
+                spi4t3_start();
+        }
+
+        void spi4t3_setMode(uint8_t CTARn, uint8_t dataMode)
+        {
+                spi4t3_stop();
+                if (CTARn==0){
+                        SPI0_CTAR0 = SPI0_CTAR0 & ~(SPI_CTAR_CPOL | SPI_CTAR_CPHA) | dataMode << 25;}
+                if (CTARn==1){
+                        SPI0_CTAR1 = SPI0_CTAR1 & ~(SPI_CTAR_CPOL | SPI_CTAR_CPHA) | dataMode << 25;}
+                if (CTARn==2){
+                        SPI0_CTAR0_SLAVE = SPI0_CTAR0_SLAVE & ~(SPI_CTAR_CPOL | SPI_CTAR_CPHA) | dataMode << 25;}
+                spi4t3_start();
+        }
+
+        void spi4t3_setBitOrder(int CTARn, uint8_t bo)
+        {
+                spi4t3_stop();
+                if (CTARn==0){
+                        if (bo == LSBFIRST) {
+                                SPI0_CTAR0 |= SPI_CTAR_LSBFE;}
+                        if (bo == MSBFIRST) {
+                                SPI0_CTAR0 &= ~SPI_CTAR_LSBFE;}}
+                if (CTARn==1){
+                        if (bo == LSBFIRST) {
+                                SPI0_CTAR1 |= SPI_CTAR_LSBFE;}
+                        if (bo == MSBFIRST) {
+                                SPI0_CTAR1 &= ~SPI_CTAR_LSBFE;}}
+                spi4t3_start();
+        }
+
+        void spi4t3_setClockDivider(int CTARn, uint8_t cdiv)
+        {
+                spi4t3_stop();
+                if (CTARn==0){
+                        SPI0_CTAR0 |= SPI_CTAR_DBR | SPI_CTAR_CSSCK(cdiv) | SPI_CTAR_BR(cdiv);}
+                if (CTARn==1){
+                        SPI0_CTAR1 |= SPI_CTAR_DBR | SPI_CTAR_CSSCK(cdiv) | SPI_CTAR_BR(cdiv);}
+                spi4t3_start();
+        }
+
+        //TRANSMIT & RECEIVE PACKET OF 16 BIT DATA
+        void spi4t3_txrx16(volatile uint16_t *dataOUT, volatile uint16_t *dataIN, int length, int CTARn, uint8_t PCS){
+        	int i;
+        	for (i=0; i < length; i++){
+        		SPI0_MCR |= SPI_MCR_CLR_RXF;
+        		SPI4T3_WRITE_16(dataOUT[i], CTARn, PCS);
+        		SPI4T3_WAIT();
+        		delayMicroseconds(1);
+        		dataIN[i]=SPI0_POPR;
+        		}
+        	printf("OUT: 0x%04x IN: 0x%04x\n", dataOUT[0], dataIN[0]);
+        }
 
         uint32_t ctar0;
         uint32_t ctar1;
@@ -115,7 +281,7 @@
                 // SPI_CTAR_DBR, SPI_CTAR_BR(0), SPI_CTAR_BR(1)
                 ctar0 = SPI_CTAR_DBR;
                 ctar1 = ctar0;
-                ctar0 |= SPI_CTAR_FMSZ(7);
+                ctar0 |= SPI_CTAR_FMSZ(15);
                 ctar1 |= SPI_CTAR_FMSZ(15);
                 SPI0_MCR = SPI_MCR_MSTR | SPI_MCR_PCSIS(0x1F);
                 SPI0_MCR |= SPI_MCR_CLR_RXF | SPI_MCR_CLR_TXF;
@@ -205,7 +371,6 @@
                 SPI0_MCR = SPI_MCR_MSTR | SPI_MCR_CLR_RXF | SPI_MCR_CLR_TXF | SPI_MCR_PCSIS(0x1F);
                 SPI0_SR = SPI_SR_TCF;
                 SPI0_PUSHR = SPI_PUSHR_CONT | b;
-                printf("MCR 0x%02x\n", b);
                 while(!(SPI0_SR & SPI_SR_TCF));
                 byte_tmp = SPI0_POPR;
                 return byte_tmp;
@@ -218,7 +383,6 @@
             SPI0_MCR = SPI_MCR_MSTR | SPI_MCR_CLR_RXF | SPI_MCR_CLR_TXF | SPI_MCR_PCSIS(0x1F);
             SPI0_SR = SPI_SR_TCF;
             SPI0_PUSHR = SPI_PUSHR_CONT | word;
-            printf("MCR 0x%04x\n", word);
             while(!(SPI0_SR & SPI_SR_TCF));
             word_tmp = SPI0_POPR;
             return word_tmp;
