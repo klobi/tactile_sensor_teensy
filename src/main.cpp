@@ -8,6 +8,7 @@ extern "C" {
 #include <stdarg.h>
 #include "WProgram.h"
 #include <Arduino.h>
+#include <usb4t3.h>
 
 #define HWSERIAL Serial1
 
@@ -50,18 +51,30 @@ void setup()
 	HWSERIAL.begin(115200);
 }
 
-int main(void)
+void usb4t3()
+{
+	uint8_t t[160];
+
+	for(int i = 0; i< 160; i++){
+		t[i] = 0x40;
+	}
+	t[0] = 'S';
+	t[159] = 'E';
+	//cmdMessenger.sendBinCmd(0x40, &t);
+	while(1)
+	{
+		if(Serial.read() == 'T')
+			usb4t3_send_data(t, 160);
+	}
+}
+
+void spi_test()
 {
 	ad7490 devices[1];
 	devices[0].chip_select = CS_PIN1;
 	pinMode(CS_PIN1, OUTPUT);
 
-	setup();
-
-	printf("Hello and Welcome!\n");
 	spi_init_master(3, 1, 0);
-
-
 
 	while(1)
 	{
@@ -86,5 +99,16 @@ int main(void)
 		}
 
 		getchar();
+	}
+}
+
+int main(void)
+{
+	setup();
+	printf("Hello and Welcome!\n");
+	while(1)
+	{
+		//usb4t3();
+		spi_test();
 	}
 }
