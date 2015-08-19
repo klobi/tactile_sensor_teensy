@@ -88,9 +88,10 @@
 		uint32_t ctar=0;
 
         void spi4t3_init_master(void) {
+        		// enable clock to SPI.
         		SIM_SCGC6 |= SIM_SCGC6_SPI0;
                 spi4t3_setMCR(MASTER);
-                spi4t3_setCTAR(0,16,SPI_MODE2, MSB_FIRST,SPI_CLOCK_DIV8);
+                spi4t3_setCTAR(0 , 16, SPI_MODE2, MSB_FIRST, SPI_CLOCK_DIV8);
                 spi4t3_enablePins(SCK, MOSI, MISO, CS4, CS4_ActiveLOW);
         }
 
@@ -231,6 +232,9 @@
 
         void spi4t3_setClockDivider(int CTARn, uint8_t cdiv)
         {
+        // PCS to SCK Delay Scaler
+        // Baud Rate Scaler
+        // SCK baud rate = (fSYS/PBR) x [(1+DBR)/BR]
                 spi4t3_stop();
                 if (CTARn==0){
                         SPI0_CTAR0 |= SPI_CTAR_DBR | SPI_CTAR_CSSCK(cdiv) | SPI_CTAR_BR(cdiv);}
@@ -246,7 +250,6 @@
         		SPI0_MCR |= SPI_MCR_CLR_RXF;
         		SPI4T3_WRITE_16(dataOUT[i], CTARn, PCS);
         		SPI4T3_WAIT();
-        		delayMicroseconds(1);
         		dataIN[i]=SPI0_POPR;
         		}
         	printf("OUT: 0x%04x IN: 0x%04x\n", dataOUT[0], dataIN[0]);

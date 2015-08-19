@@ -44,7 +44,7 @@ extern "C" {
 			return (fd < 3) ? 1 : 0;
 	}
 }
-#define CS_PIN1 10
+#define CS_PIN1 2
 
 void setup()
 {
@@ -73,6 +73,7 @@ void spi_test()
 	ad7490 devices[1];
 	devices[0].chip_select = CS_PIN1;
 	pinMode(CS_PIN1, OUTPUT);
+	digitalWrite(CS_PIN1, 1);
 
 	spi_init_master(3, 1, 0);
 
